@@ -124,26 +124,44 @@ module.exports = {
       }
     },
   
-  async addReaction(req, res) {
-    try {
-      const { thoughtId, reactionId } = req.params;
-
-      const thought = await Thought.findOne({ _id: thoughtId });
-
-      if (!thought) {
-        return res.status(404).json({ message: 'No thought found with that ID' });
-      }
-
-      thought.reactions.addToSet(reactionId);
-
-      const updatedThought = await thought.save();
-
-      res.json(updatedThought);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json(err);
-    }
-  },
+    async addReaction(req, res) {
+        try {
+          const { thoughtId } = req.params;
+          const { reactionBody, username } = req.body;
+      
+          const thought = await Thought.findOne({ _id: thoughtId });
+      
+          if (!thought) {
+            return res.status(404).json({ message: 'No thought found with that ID' });
+          }
+      
+          thought.reactions.push({ reactionBody, username }); // Add the reaction without specifying reactionId
+      
+          const updatedThought = await thought.save();
+      
+          const formattedThought = {
+            _id: updatedThought._id,
+            thoughtText: updatedThought.thoughtText,
+            username: updatedThought.username.username, // Extract the username field
+            createdAt: updatedThought.createdAt,
+            reactions: updatedThought.reactions.map((reaction) => ({
+                reactionId: reaction.reactionId,
+                reactionBody: reaction.reactionBody,
+                username: reaction.username.username, // Assuming you want to extract the username field
+                createdAt: reaction.createdAt,
+              })),
+            reactionCount: updatedThought.reactionCount,
+            id: updatedThought.id,
+          };
+      
+          res.json(formattedThought);
+        } catch (err) {
+          console.error(err);
+          res.status(500).json(err);
+        }
+      },
+      
+      
 
   async removeReaction(req, res) {
     try {
