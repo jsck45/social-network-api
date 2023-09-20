@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const { Schema } = require('mongoose');
 
-const reactionSchema = new mongoose.Schema(
+const reactionSchema = new Schema(
   {
     reactionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: () => new mongoose.Types.ObjectId(),
+      type: Schema.Types.ObjectId,
+      default: () => new Types.ObjectId(),
     },
     reactionBody: {
       type: String,
@@ -12,8 +12,10 @@ const reactionSchema = new mongoose.Schema(
       maxlength: 280,
     },
     username: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
+      select: 'username'
     },
     createdAt: {
       type: Date,
