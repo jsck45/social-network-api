@@ -1,22 +1,25 @@
-const { ObjectId } = require('mongoose').Types;
 const { User, Thought } = require('../models');
 
 module.exports = {
-    // Get all students
     async getUsers(req, res) {
-      try {
-        const users = await User.find();
-  
-        const userObj = {
-          users,
-        };
-  
-        res.json(userObj);
-      } catch (err) {
-        console.log(err);
-        return res.status(500).json(err);
-      }
-    },
+        try {
+          const users = await User.find();
+      
+          if (!users || users.length === 0) {
+            return res.status(404).json({ message: 'No users found' });
+          }
+      
+          const userObj = {
+            users,
+          };
+      
+          res.json(userObj);
+        } catch (err) {
+          console.log(err);
+          return res.status(500).json(err);
+        }
+      },
+      
 
     async getSingleUser(req, res) {
       try {

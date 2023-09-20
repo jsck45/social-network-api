@@ -15,13 +15,17 @@ const userSchema = new Schema(
       unique: true,
       validate: {
         validator: function (value) {
-            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-            return emailRegex.text(value);
-        }
-      }
+          // Define your email regex pattern
+          const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+
+          // Use the test method to check if the value matches the pattern
+          return emailRegex.test(value);
+        },
+        message: 'Invalid email format',
+      },
     },
-    thoughts: [{ type: Schema.Types.ObjectId, ref: 'Thought' }], 
-    friends: [{ type: Schema.Types.ObjectId, ref: 'User' }], 
+    thoughts: [{ type: Schema.Types.ObjectId, ref: 'Thought' }],
+    friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   {
     toJSON: {
@@ -31,6 +35,7 @@ const userSchema = new Schema(
   }
 );
 
+  
 userSchema.virtual('friendCount').get(function () {
     return this.friends.length;
   });
