@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { thought, Thought } = require('../models');
+const { Thought } = require('../models');
 
 module.exports = {
     async getThoughts(req, res) {
@@ -131,6 +131,8 @@ module.exports = {
       
           const thought = await Thought.findOne({ _id: thoughtId });
       
+          console.log('Type of reactionId from req.params:', typeof thoughtId);
+
           if (!thought) {
             return res.status(404).json({ message: 'No thought found with that ID' });
           }
@@ -161,30 +163,46 @@ module.exports = {
         }
       },
       
+      async removeReaction(req, res) {
+        try {
+          const { thoughtId, reactionId } = req.params;
       
-
-  async removeReaction(req, res) {
-    try {
-      const { thoughtId, reactionId } = req.params;
-
-      const thought = await Thought.findOne({ _id: thoughtId });
-
-      if (!thought) {
-        return res.status(404).json({ message: 'No thought found with that ID' });
+          console.log('thoughtId:', thoughtId);
+          console.log('reactionId:', reactionId);
+      
+          const thought = await Thought.findOne({ _id: thoughtId });
+      
+          console.log('thought:', thought);
+      
+          if (!thought) {
+            return res.status(404).json({ message: 'No thought found with that ID' });
+          }
+      
+          const reactionObjectId = new mongoose.Types.ObjectId(reactionId);
+      
+          if (!thought.reactions.some(reaction => reaction.reactionId.equals(reactionObjectId))) {
+            return res.status(400).json({ message: 'Reaction not found in the thought' });
+          }
+      
+          const updatedThought = await Thought.findByIdAndUpdate(
+            thoughtId,
+            { $pull: { reactions: { reactionId: reactionObjectId } } },
+            { new: true }
+          );         
+      
+          const formattedThought = {
+            _id: updatedThought._id,
+            thoughtText: updatedThought.thoughtText,
+            username: updatedThought.username.username,
+            createdAt: updatedThought.createdAt,
+            reactions: updatedThought.reactions,
+            reactionCount: updatedThought.reactionCount,
+          };
+      
+          res.json(formattedThought);
+        } catch (err) {
+          console.error(err);
+          res.status(500).json(err);
+        }
       }
-
-      if (!thought.reactions.includes(reactionId)) {
-        return res.status(400).json({ message: 'Reaction not found in the thought' });
-      }
-
-      thought.reactions.pull(reactionId);
-
-      const updatedThought = await thought.save();
-
-      res.json(updatedThought);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json(err);
-    }
-  },
-};
+    };      
