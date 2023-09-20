@@ -18,7 +18,6 @@ const userSchema = new Schema(
           // Define your email regex pattern
           const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
-          // Use the test method to check if the value matches the pattern
           return emailRegex.test(value);
         },
         message: 'Invalid email format',
