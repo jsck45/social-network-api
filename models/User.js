@@ -15,7 +15,6 @@ const userSchema = new Schema(
       unique: true,
       validate: {
         validator: function (value) {
-          // Define your email regex pattern
           const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
           return emailRegex.test(value);
