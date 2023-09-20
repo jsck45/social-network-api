@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { User, Thought } = require('../models');
 
 module.exports = {
@@ -107,46 +108,53 @@ module.exports = {
     },
   
     async addFriend(req, res) {
-      console.log('You are adding a friend');
-      console.log(req.body);
-  
-      try {
-        const user = await User.findOneAndUpdate(
-          { _id: req.params.userId },
-          { $addToSet: { friends: req.body } },
-          { runValidators: true, new: true }
-        );
-  
-        if (!user) {
-          return res
-            .status(404)
-            .json({ message: 'No user found with that ID :(' });
+        try {
+          const { userId, friendId } = req.params;
+      
+          const user = await User.findOne({ _id: userId });
+      
+          if (!user) {
+            return res.status(404).json({ message: 'No user found with that ID' });
+          }
+      
+          if (!mongoose.Types.ObjectId.isValid(friendId)) {
+            return res.status(400).json({ message: 'Invalid friendId' });
+          }
+      
+          user.friends.addToSet(friendId);
+      
+          const updatedUser = await user.save();
+      
+          res.json(updatedUser);
+        } catch (err) {
+          console.error(err);
+          res.status(500).json(err);
         }
-  
-        res.json(user);
-      } catch (err) {
-        res.status(500).json(err);
-      }
-    },
-
-    async removeFriend(req, res) {
-      try {
-        const user = await User.findOneAndUpdate(
-          { _id: req.params.userId },
-          { $pull: { friends: { friendId: req.params.friendId } } },
-          { runValidators: true, new: true }
-        );
-  
-        if (!user) {
-          return res
-            .status(404)
-            .json({ message: 'No user found with that ID :(' });
+      },
+      
+      async removeFriend(req, res) {
+        try {
+          const { userId, friendId } = req.params;
+      
+          const user = await mongoose.model('User').findOne({ _id: userId });
+      
+          if (!user) {
+            return res.status(404).json({ message: 'No user found with that ID' });
+          }
+      
+          if (!mongoose.Types.ObjectId.isValid(friendId)) {
+            return res.status(400).json({ message: 'Invalid friendId' });
+          }
+      
+          user.friends.pull(friendId);
+      
+          const updatedUser = await user.save();
+      
+          res.json(updatedUser);
+        } catch (err) {
+          console.error(err);
+          res.status(500).json(err);
         }
-  
-        res.json(user);
-      } catch (err) {
-        res.status(500).json(err);
       }
-    },
   };
   
