@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { Thought } = require('../models');
+const { Thought, Reaction } = require('../models');
 
 module.exports = {
     async getThoughts(req, res) {
@@ -123,37 +123,46 @@ module.exports = {
         res.status(500).json(err);
       }
     },
-  
     async addReaction(req, res) {
         try {
           const { thoughtId } = req.params;
           const { reactionBody, username } = req.body;
       
-          const thought = await Thought.findOne({ _id: thoughtId });
+          const thought = await Thought.findOne({ _id: thoughtId })
+            .populate('username')
+            .populate({
+              path: 'reactions.username',
+              model: 'User',
+              select: 'username',
+            });
       
-          console.log('Type of reactionId from req.params:', typeof thoughtId);
-
           if (!thought) {
             return res.status(404).json({ message: 'No thought found with that ID' });
           }
       
-          thought.reactions.push({ reactionBody, username }); // Add the reaction without specifying reactionId
+          const usernameString = typeof username === 'string' ? username : username.username;
+      
+          const newReaction = {
+            reactionBody,
+            username: usernameString,
+          };
+      
+          thought.reactions.push(newReaction);
       
           const updatedThought = await thought.save();
       
           const formattedThought = {
-            _id: updatedThought._id,
+            thoughtId: updatedThought.id,
             thoughtText: updatedThought.thoughtText,
-            username: updatedThought.username.username, // Extract the username field
+            username: updatedThought.username.username,
             createdAt: updatedThought.createdAt,
-            reactions: updatedThought.reactions.map((reaction) => ({
-                reactionId: reaction.reactionId,
-                reactionBody: reaction.reactionBody,
-                username: reaction.username.username, // Assuming you want to extract the username field
-                createdAt: reaction.createdAt,
-              })),
             reactionCount: updatedThought.reactionCount,
-            id: updatedThought.id,
+            reactions: updatedThought.reactions.map((reaction) => ({
+              reactionId: reaction.reactionId,
+              reactionBody: reaction.reactionBody,
+              username: reaction.username.username,
+              createdAt: reaction.createdAt,
+            })),
           };
       
           res.json(formattedThought);
@@ -167,12 +176,7 @@ module.exports = {
         try {
           const { thoughtId, reactionId } = req.params;
       
-          console.log('thoughtId:', thoughtId);
-          console.log('reactionId:', reactionId);
-      
           const thought = await Thought.findOne({ _id: thoughtId });
-      
-          console.log('thought:', thought);
       
           if (!thought) {
             return res.status(404).json({ message: 'No thought found with that ID' });
@@ -180,23 +184,31 @@ module.exports = {
       
           const reactionObjectId = new mongoose.Types.ObjectId(reactionId);
       
-          if (!thought.reactions.some(reaction => reaction.reactionId.equals(reactionObjectId))) {
+          if (!thought.reactions.some((reaction) => reaction.reactionId.equals(reactionObjectId))) {
             return res.status(400).json({ message: 'Reaction not found in the thought' });
           }
       
-          const updatedThought = await Thought.findByIdAndUpdate(
+          // Remove the reaction using $pull
+          await Thought.findByIdAndUpdate(
             thoughtId,
-            { $pull: { reactions: { reactionId: reactionObjectId } } },
-            { new: true }
-          );         
+            { $pull: { reactions: { reactionId: reactionObjectId } } }
+          );
+      
+          // Fetch the updated thought after removing the reaction
+          const updatedThought = await Thought.findById(thoughtId).populate('username');
       
           const formattedThought = {
-            _id: updatedThought._id,
+            thoughtId: updatedThought._id,
             thoughtText: updatedThought.thoughtText,
             username: updatedThought.username.username,
             createdAt: updatedThought.createdAt,
-            reactions: updatedThought.reactions,
             reactionCount: updatedThought.reactionCount,
+            reactions: updatedThought.reactions.map((reaction) => ({
+              reactionId: reaction.reactionId,
+              reactionBody: reaction.reactionBody,
+              username: reaction.username.username,
+              createdAt: reaction.createdAt,
+            })),
           };
       
           res.json(formattedThought);
