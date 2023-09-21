@@ -9,7 +9,11 @@ module.exports = {
               path: 'username',
               select: 'username', 
             })
-            .populate('reactions')
+            .populate({
+              path: 'reactions.username',
+              model: 'User',
+              select: 'username',
+            })            
             .select('-__v');
       
           if (!thoughts || thoughts.length === 0) {
@@ -22,9 +26,13 @@ module.exports = {
             thoughtText: thought.thoughtText,
             username: thought.username.username, // Extract the username field
             createdAt: thought.createdAt,
-            reactions: thought.reactions,
             reactionCount: thought.reactionCount,
-            id: thought.id,
+            reactions: thought.reactions.map((reaction) => ({
+              reactionId: reaction.reactionId,
+              reactionBody: reaction.reactionBody,
+              username: reaction.username.username,
+              createdAt: reaction.createdAt,
+            })),         
           }));
       
           const thoughtObj = {
@@ -85,9 +93,25 @@ module.exports = {
 
     async createThought(req, res) {
       try {
-        const thought = await Thought.create(req.body);
-        res.json(thought);
-      } catch (err) {
+        const thought = await Thought.create(req.body)
+        .populate({
+          path: 'username',
+          select: 'username',
+        })
+        .select('-__v');
+
+        const formattedThought = {
+            _id: thought._id,
+            thoughtText: thought.thoughtText,
+            username: thought.username.username, 
+            createdAt: thought.createdAt,
+            reactionCount: thought.reactionCount, 
+          };
+      
+          res.json({
+            thought: formattedThought,
+          });      
+        } catch (err) {
         res.status(500).json(err);
       }
     },
