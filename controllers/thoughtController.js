@@ -168,12 +168,10 @@ module.exports = {
           if (!thought) {
             return res.status(404).json({ message: 'No thought found with that ID' });
           }
-      
-          const usernameString = typeof username === 'string' ? username : username.username;
-      
+            
           const newReaction = {
             reactionBody,
-            username: usernameString,
+            username: username,
           };
       
           thought.reactions.push(newReaction);
