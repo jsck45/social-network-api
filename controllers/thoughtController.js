@@ -48,6 +48,11 @@ module.exports = {
               path: 'username',
               select: 'username',
             })
+            .populate({
+              path: 'reactions.username',
+              model: 'User',
+              select: 'username',
+            })
             .select('-__v');
       
           if (!thought) {
@@ -57,11 +62,15 @@ module.exports = {
           const formattedThought = {
             _id: thought._id,
             thoughtText: thought.thoughtText,
-            username: thought.username.username, // Extract the username field
+            username: thought.username.username, 
             createdAt: thought.createdAt,
-            reactions: thought.reactions,
             reactionCount: thought.reactionCount,
-            id: thought.id,
+            reactions: thought.reactions.map((reaction) => ({
+              reactionId: reaction.reactionId,
+              reactionBody: reaction.reactionBody,
+              username: reaction.username.username,
+              createdAt: reaction.createdAt,
+            })),         
           };
       
           res.json({
@@ -123,6 +132,7 @@ module.exports = {
         res.status(500).json(err);
       }
     },
+
     async addReaction(req, res) {
         try {
           const { thoughtId } = req.params;
