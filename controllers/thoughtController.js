@@ -93,12 +93,7 @@ module.exports = {
 
     async createThought(req, res) {
       try {
-        const thought = await Thought.create(req.body)
-        .populate({
-          path: 'username',
-          select: 'username',
-        })
-        .select('-__v');
+        const thought = await Thought.create(req.body);
 
         const formattedThought = {
             _id: thought._id,
