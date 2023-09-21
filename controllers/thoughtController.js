@@ -185,7 +185,7 @@ module.exports = {
             createdAt: updatedThought.createdAt,
             reactionCount: updatedThought.reactionCount,
             reactions: updatedThought.reactions.map((reaction) => ({
-              reactionId: reaction.reactionId,
+              reactionId: reaction._id, 
               reactionBody: reaction.reactionBody,
               username: reaction.username.username,
               createdAt: reaction.createdAt,
@@ -209,19 +209,11 @@ module.exports = {
             return res.status(404).json({ message: 'No thought found with that ID' });
           }
       
-          const reactionObjectId = new mongoose.Types.ObjectId(reactionId);
-      
-          if (!thought.reactions.some((reaction) => reaction.reactionId.equals(reactionObjectId))) {
-            return res.status(400).json({ message: 'Reaction not found in the thought' });
-          }
-      
-          // Remove the reaction using $pull
           await Thought.findByIdAndUpdate(
             thoughtId,
-            { $pull: { reactions: { reactionId: reactionObjectId } } }
+            { $pull: { reactions: { _id: reactionId } } }
           );
       
-          // Fetch the updated thought after removing the reaction
           const updatedThought = await Thought.findById(thoughtId).populate('username');
       
           const formattedThought = {
@@ -231,7 +223,7 @@ module.exports = {
             createdAt: updatedThought.createdAt,
             reactionCount: updatedThought.reactionCount,
             reactions: updatedThought.reactions.map((reaction) => ({
-              reactionId: reaction.reactionId,
+              reactionId: reaction._id, 
               reactionBody: reaction.reactionBody,
               username: reaction.username.username,
               createdAt: reaction.createdAt,
