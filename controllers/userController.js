@@ -7,13 +7,13 @@ module.exports = {
       const users = await User.find()
         .populate({
           path: 'thoughts',
-          select: 'thoughtText reactions', // Include reactions field for thoughts
+          select: 'thoughtText reactions', 
           populate: {
             path: 'reactions',
-            select: 'reactionBody username', // Include relevant fields for reactions
+            select: 'reactionBody username', 
             populate: {
               path: 'username',
-              select: 'username', // Include username field for reactions' username
+              select: 'username',
             },
           },
         })
@@ -34,7 +34,7 @@ module.exports = {
         thoughts: user.thoughts.map((thought) => ({
           thoughtID: thought._id,
           thoughtText: thought.thoughtText,
-          reactionCount: thought.reactions.length, // Count reactions directly
+          reactionCount: thought.reactions.length, 
           reactions: thought.reactions.map((reaction) => ({
             reactionID: reaction._id,
             reaction: reaction.reactionBody,
@@ -52,24 +52,56 @@ module.exports = {
     }
   },
   
-    async getSingleUser(req, res) {
-      try {
-        const user = await User.findOne({ _id: req.params.userId })
-        .populate('thoughts')
-          .select('-__v');
+  async getSingleUser(req, res) {
+    try {
+      const user = await User.findOne({ _id: req.params.userId })
+        .populate({
+          path: 'thoughts',
+          select: 'thoughtText reactions',
+          populate: {
+            path: 'reactions',
+            select: 'reactionBody username',
+            populate: {
+              path: 'username',
+              select: 'username',
+            },
+          },
+        })
+        .populate({
+          path: 'friends',
+          select: 'username',
+        })
+        .select('-__v');
   
-        if (!user) {
-          return res.status(404).json({ message: 'No user with that ID' })
-        }
-  
-        res.json({
-          user,
-        });
-      } catch (err) {
-        console.log(err);
-        return res.status(500).json(err);
+      if (!user) {
+        return res.status(404).json({ message: 'No user with that ID' });
       }
-    },
+  
+      const formattedUser = {
+        userID: user._id,
+        username: user.username,
+        email: user.email,
+        thoughts: user.thoughts.map((thought) => ({
+          thoughtID: thought._id,
+          thoughtText: thought.thoughtText,
+          reactionCount: thought.reactions.length,
+          reactions: thought.reactions.map((reaction) => ({
+            reactionID: reaction._id,
+            reaction: reaction.reactionBody,
+            username: reaction.username ? reaction.username.username : null,
+          })),
+        })),
+        friendCount: user.friendCount,
+        friends: user.friends.map((friend) => ({ friendID: friend._id, username: friend.username })),
+      };
+  
+      res.json(formattedUser);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
+  },
+  
 
     async createUser(req, res) {
       try {
