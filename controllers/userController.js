@@ -174,7 +174,6 @@ module.exports = {
           const { userId, friendId } = req.params;
       
           const user = await User.findOne({ _id: userId })
-          // .populate('friends');
       
           if (!user) {
             return res.status(404).json({ message: 'No user found with that ID' });
@@ -220,9 +219,18 @@ module.exports = {
       
           user.friends.pull(friendId);
       
-          const updatedUser = await user.save();
+          await user.save();
       
-          res.json(updatedUser);
+          const formattedUser = {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            friendCount: user.friendCount,
+            friends: user.friends   
+          };
+      
+          res.json(formattedUser);
+        
         } catch (err) {
           console.error(err);
           res.status(500).json(err);
