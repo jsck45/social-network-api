@@ -89,12 +89,21 @@ module.exports = {
   async createThought(req, res) {
     try {
       const { thoughtText, username } = req.body;
+
+      const user = await User.findOne({ _id: username })
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found'});
+      }
   
       const thought = await Thought.create({
         thoughtText,
         username,
         user: User._id,
       });
+
+      user.thoughts.push(thought._id);
+      await user.save();
   
       res.json('Thought successfully created!');
     } catch (err) {
