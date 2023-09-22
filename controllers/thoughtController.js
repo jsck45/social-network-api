@@ -172,13 +172,24 @@ module.exports = {
         { _id: thoughtId },
         { thoughtText }, 
         { new: true }
-      );
+      )
+      .populate('username', 'username');
 
       if (!updatedThought) {
         return res.status(404).json({ message: 'No thought with that ID' });
       }
 
-      res.json(updatedThought);
+      const formattedThought = {
+        thoughtId: updatedThought._id,
+        thoughtText: updatedThought.thoughtText,
+        username: updatedThought.username.username,
+        createdAt: updatedThought.createdAt,
+        reactions: updatedThought.reactions,
+        reactionCount: updatedThought.reactionCount,
+      };
+  
+      res.json(formattedThought);
+    
     } catch (err) {
       console.error(err);
       res.status(500).json(err);
