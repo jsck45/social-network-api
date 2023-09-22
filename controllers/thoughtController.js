@@ -23,11 +23,11 @@ module.exports = {
       const formattedThoughts = thoughts.map((thought) => ({
         _id: thought._id,
         thoughtText: thought.thoughtText,
-        username: thought.username, 
+        username: thought.username.username,
         createdAt: thought.createdAt,
         reactionCount: thought.reactionCount,
         reactions: thought.reactions.map((reaction) => ({
-          reactionId: reaction.reactionId,
+          reactionId: reaction._id,
           reactionBody: reaction.reactionBody,
           username: reaction.username.username,
           createdAt: reaction.createdAt,
@@ -70,7 +70,7 @@ module.exports = {
         createdAt: thought.createdAt,
         reactionCount: thought.reactionCount,
         reactions: thought.reactions.map((reaction) => ({
-          reactionId: reaction.reactionId,
+          reactionId: reaction._id,
           reactionBody: reaction.reactionBody,
           username: reaction.username.username,
           createdAt: reaction.createdAt,
