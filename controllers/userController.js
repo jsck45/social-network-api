@@ -2,25 +2,40 @@ const mongoose = require('mongoose');
 const { User, Thought } = require('../models');
 
 module.exports = {
-    async getUsers(req, res) {
-        try {
-          const users = await User.find();
-      
-          if (!users || users.length === 0) {
-            return res.status(404).json({ message: 'No users found' });
-          }
-      
-          const userObj = {
-            users,
-          };
-      
-          res.json(userObj);
-        } catch (err) {
-          console.log(err);
-          return res.status(500).json(err);
-        }
-      },
-      
+  async getUsers(req, res) {
+    try {
+      const users = await User.find()
+      .populate({
+        path: 'thoughts',
+        model: 'Thought',
+      })        
+      .populate('friends')
+        .select('-__v');
+
+        console.log(users);
+
+  
+      if (!users || users.length === 0) {
+        return res.status(404).json({ message: 'No users found' });
+      }
+  
+      // Format each user individually
+      const formattedUsers = users.map((user) => ({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        thoughts: user.thoughts,
+        friendCount: user.friendCount,
+        friends: user.friends,
+      }));
+  
+      res.json(formattedUsers);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
+  },
+  
 
     async getSingleUser(req, res) {
       try {
