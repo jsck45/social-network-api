@@ -11,7 +11,7 @@ const reactionSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      select: 'username'
+      select: 'username',
     },
     createdAt: {
       type: Date,
@@ -22,6 +22,11 @@ const reactionSchema = new Schema(
   {
     toJSON: {
       getters: true,
+      transform: (doc, ret) => {
+        ret.reactionID = doc._id;
+        delete ret._id;
+        delete ret.__v;
+      },
     },
   }
 );

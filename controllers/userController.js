@@ -5,28 +5,44 @@ module.exports = {
   async getUsers(req, res) {
     try {
       const users = await User.find()
-      .populate({
-        path: 'thoughts',
-        model: 'Thought',
-      })        
-      .populate('friends')
+        .populate({
+          path: 'thoughts',
+          select: 'thoughtText reactions', // Include reactions field for thoughts
+          populate: {
+            path: 'reactions',
+            select: 'reactionBody username', // Include relevant fields for reactions
+            populate: {
+              path: 'username',
+              select: 'username', // Include username field for reactions' username
+            },
+          },
+        })
+        .populate({
+          path: 'friends',
+          select: 'username',
+        })
         .select('-__v');
-
-        console.log(users);
-
   
       if (!users || users.length === 0) {
         return res.status(404).json({ message: 'No users found' });
       }
   
-      // Format each user individually
       const formattedUsers = users.map((user) => ({
-        _id: user._id,
+        userID: user._id,
         username: user.username,
         email: user.email,
-        thoughts: user.thoughts,
+        thoughts: user.thoughts.map((thought) => ({
+          thoughtID: thought._id,
+          thoughtText: thought.thoughtText,
+          reactionCount: thought.reactions.length, // Count reactions directly
+          reactions: thought.reactions.map((reaction) => ({
+            reactionID: reaction._id,
+            reaction: reaction.reactionBody,
+            username: reaction.username ? reaction.username.username : null,
+          })),
+        })),
         friendCount: user.friendCount,
-        friends: user.friends,
+        friends: user.friends.map((friend) => ({ friendID: friend._id, username: friend.username })),    
       }));
   
       res.json(formattedUsers);
@@ -36,7 +52,6 @@ module.exports = {
     }
   },
   
-
     async getSingleUser(req, res) {
       try {
         const user = await User.findOne({ _id: req.params.userId })
